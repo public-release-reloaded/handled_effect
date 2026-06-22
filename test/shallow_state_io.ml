@@ -12,7 +12,7 @@ module Eff2 = Handled_effect.Make (struct
     type 'a t = 'a op2
   end)
 
-let handle_state (* local_ *) hs init f =
+let handle_state (* *) hs init f =
   let rec handle (state : int) = function
     | Eff1.Value result -> result, state
     | Eff1.Exception e -> raise e
@@ -23,7 +23,7 @@ let handle_state (* local_ *) hs init f =
   handle init (Eff1.run_with hs f) [@nontail]
 ;;
 
-let handle_print (* local_ *) hs f =
+let handle_print (* *) hs f =
   let rec handle = function
     | Eff2.Value x -> x
     | Eff2.Exception e -> raise e

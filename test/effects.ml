@@ -103,7 +103,7 @@ let handle = function
   | Eff1.Operation (Xchg msg, cont) -> Suspended { msg; cont }
 ;;
 
-let step (f : local_ _ -> 'a) () : 'a status = handle (Eff1.run f)
+let step (f : _ -> 'a) () : 'a status = handle (Eff1.run f)
 
 let rec run_both a b =
   match a (), b () with
@@ -122,7 +122,7 @@ let%expect_test ("bidirectional communication" [@tags "runtime5-only"]) =
 ;;
 
 type ('a, 't) op2 =
-  | Fork : (local_ 't Handler.t -> unit) -> (unit, 't) op2
+  | Fork : ('t Handler.t -> unit) -> (unit, 't) op2
   | Yield : (unit, 't) op2
   | Xchg : int -> (int, 't) op2
 
@@ -275,7 +275,7 @@ module Eff5 = Handled_effect.Make1 (struct
     type ('a, 'p) t = ('a, 'p) op5
   end)
 
-let invert (type a) ~(iter : local_ (a -> unit) -> unit) : a OnceSeq.t =
+let invert (type a) ~(iter : (a -> unit) -> unit) : a OnceSeq.t =
   fun () ->
   let rec handle = function
     | Eff5.Value () -> OnceSeq.nil

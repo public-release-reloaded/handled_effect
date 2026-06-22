@@ -106,13 +106,13 @@ module Handler : sig @@ portable
 
     (** [initial ~length] is a list of handlers for effects [es], where [length] is the
         length of [es]. *)
-    val initial : length:es List.Length.t @ local -> es List.t
+    val initial : length:es List.Length.t -> es List.t
 
     (** [initial_from hs] is a list of handlers for effect [es], where [hs] is another
         list of handlers for effects [es]. These handlers are selected from the effect
         list [e * es] for some effect [e]. Note that [hs] is being used only for its
         length -- the actual handlers in it do not affect the output. *)
-    val initial_from : es List.t @ local -> es List.t
+    val initial_from : es List.t -> es List.t
   end
 
   val create : unit -> (module Create with type e = 'e and type es = 'es)
@@ -137,7 +137,7 @@ end = struct
     end
 
     let length t =
-      let rec loop : type es. es t @ local -> es Length.t = function
+      let rec loop : type es. es t -> es Length.t = function
         | [] -> []
         | _ :: rest -> X :: loop rest
       in
@@ -150,8 +150,8 @@ end = struct
     type es
     type 'e t' += C : ('e, e * es) Raw_handler.t -> 'e t'
 
-    val initial : length:es List.Length.t @ local -> es List.t
-    val initial_from : es List.t @ local -> es List.t
+    val initial : length:es List.Length.t -> es List.t
+    val initial_from : es List.t -> es List.t
   end
 
   let[@inline] create (type e es) () : (module Create with type e = e and type es = es) =
@@ -163,7 +163,7 @@ end = struct
       let initial ~(length : es List.Length.t) : es List.t =
         let rec loop
           : type esr.
-            (esr, e * es) Handler_index.t -> esr List.Length.t @ local -> esr List.t
+            (esr, e * es) Handler_index.t -> esr List.Length.t -> esr List.t
           =
           fun i l ->
           match l with
@@ -175,9 +175,9 @@ end = struct
         loop Handler_index.one length [@nontail]
       ;;
 
-      let initial_from (t : es List.t @ local) : es List.t =
+      let initial_from (t : es List.t) : es List.t =
         let rec loop
-          : type esr. (esr, e * es) Handler_index.t -> esr List.t @ local -> esr List.t
+          : type esr. (esr, e * es) Handler_index.t -> esr List.t -> esr List.t
           =
           fun i l ->
           match l with
@@ -200,7 +200,7 @@ module Mapping : sig @@ portable
 
   (** [lookup h t] looks up the effect handled by [h] in mapping [t] and returns its
       handler. *)
-  val lookup : ('e, 'es) Raw_handler.t @ local -> 'es t -> 'e Handler.t
+  val lookup : ('e, 'es) Raw_handler.t -> 'es t -> 'e Handler.t
 
   (** [empty] is the mapping for the empty effect list. *)
   val empty : unit -> unit t
@@ -208,15 +208,15 @@ module Mapping : sig @@ portable
   (** [create hs] creates a new mapping from [es], where [hs] is a list of handlers for
       the effects [es]. Its initial value is to map each effect in [es] to the
       corresponding handler in [hs]. *)
-  val create : 'es Handler.List.t @ local -> 'es t
+  val create : 'es Handler.List.t -> 'es t
 
   (** [set hs t] updates the mapping [t] to map each effect handled by [hs] to its
       corresponding handler in [hs]. *)
-  val set : 'es Handler.List.t @ local -> 'es t -> unit
+  val set : 'es Handler.List.t -> 'es t -> unit
 
   (** [create len] creates a new uninitialized mapping from [es], where [len] is the
       length of [es]. The mapping must be initialized with [set] before it is used. *)
-  val create_unset : 'es Handler.List.Length.t @ local -> 'es t
+  val create_unset : 'es Handler.List.Length.t -> 'es t
 end = struct
   type element : immediate
 
@@ -239,15 +239,15 @@ end = struct
     (type e esr es)
     (t : es t)
     (idx : (e * esr, es) Handler_index.t)
-    (h : e Handler.t @ local)
+    (h : e Handler.t)
     =
     let elt : element = Obj.magic h.h in
     Array.unsafe_set t (Handler_index.to_int idx) elt
   ;;
 
-  let create (type es) (l : es Handler.List.t @ local) =
+  let create (type es) (l : es Handler.List.t) =
     let rec loop
-      : type esr. (esr, es) Handler_index.t -> esr Handler.List.t @ local -> es t
+      : type esr. (esr, es) Handler_index.t -> esr Handler.List.t -> es t
       =
       fun idx l ->
       match l with
@@ -260,9 +260,9 @@ end = struct
     loop Handler_index.zero l [@nontail]
   ;;
 
-  let set (type es) (hs : es Handler.List.t @ local) (t : es t) =
+  let set (type es) (hs : es Handler.List.t) (t : es t) =
     let rec loop
-      : type esr. (esr, es) Handler_index.t -> esr Handler.List.t @ local -> es t -> unit
+      : type esr. (esr, es) Handler_index.t -> esr Handler.List.t -> es t -> unit
       =
       fun idx hs t ->
       match hs with
@@ -274,9 +274,9 @@ end = struct
     loop Handler_index.zero hs t [@nontail]
   ;;
 
-  let create_unset (type es) (l : es Handler.List.Length.t @ local) =
+  let create_unset (type es) (l : es Handler.List.Length.t) =
     let rec loop
-      : type esr. (esr, es) Handler_index.t -> esr Handler.List.Length.t @ local -> es t
+      : type esr. (esr, es) Handler_index.t -> esr Handler.List.Length.t -> es t
       =
       fun idx l ->
       match l with
@@ -305,21 +305,21 @@ external perform_ : ('a, 'e) perform -> 'a @ once unique @@ portable = "%perform
 type last_fiber : immediate
 type (-'a, +'b) cont : value mod many
 
-let borrow (f : ('a, 'b) cont @ local -> 'c @ unique) (k : ('a, 'b) cont @ unique)
+let borrow (f : ('a, 'b) cont -> 'c @ unique) (k : ('a, 'b) cont @ unique)
   : 'c * ('a, 'b) cont
   =
   f k, Obj.magic_unique k
 ;;
 
 external get_cont_callstack
-  :  ('a, 'b) cont @ local
+  :  ('a, 'b) cont
   -> int
   -> Backtrace.t
   @@ portable
   = "caml_get_continuation_callstack"
 
 external cont_set_last_fiber
-  :  ('a, 'b) cont @ local
+  :  ('a, 'b) cont
   -> last_fiber
   -> unit
   @@ portable
@@ -386,7 +386,7 @@ external reperform
 let alloc_cont
   (type a b h e es)
   (module H : Handler.Create with type e = e and type es = es)
-  (f : (h @ local -> a @ once unique -> b) @ once)
+  (f : (h -> a @ once unique -> b) @ once)
   (h : h)
   : (a, (b, e * es) r) cont
   =
@@ -418,7 +418,7 @@ let alloc_cont
 let run_stack
   (type a h e es)
   (module H : Handler.Create with type e = e and type es = es)
-  (f : (h @ local -> a) @ once)
+  (f : (h -> a) @ once)
   (h : h)
   : (a, e * es) r
   =
@@ -490,7 +490,7 @@ let discontinue_with_backtrace k e bt hs =
     hs
 ;;
 
-let fiber (type a b e) (f : (e Handler.t @ local -> a @ once unique -> b) @ once) =
+let fiber (type a b e) (f : (e Handler.t -> a @ once unique -> b) @ once) =
   let module H =
     (val Handler.create () : Handler.Create with type e = e and type es = unit)
   in
@@ -503,8 +503,8 @@ let fiber (type a b e) (f : (e Handler.t @ local -> a @ once unique -> b) @ once
 
 let fiber_with
   (type a b e es)
-  (l : es Handler.List.Length.t @ local)
-  (f : ((e * es) Handler.List.t @ local -> a @ once unique -> b) @ once)
+  (l : es Handler.List.Length.t)
+  (f : ((e * es) Handler.List.t -> a @ once unique -> b) @ once)
   =
   let module H = (val Handler.create () : Handler.Create with type e = e and type es = es)
   in
@@ -515,7 +515,7 @@ let fiber_with
   Cont { cont; mapping }
 ;;
 
-let run (type a e) (f : (e Handler.t @ local -> a) @ once) =
+let run (type a e) (f : (e Handler.t -> a) @ once) =
   let module H =
     (val Handler.create () : Handler.Create with type e = e and type es = unit)
   in
@@ -527,8 +527,8 @@ let run (type a e) (f : (e Handler.t @ local -> a) @ once) =
 
 let run_with
   (type a e es)
-  (hs : es Handler.List.t @ local)
-  (f : ((e * es) Handler.List.t @ local -> a) @ once)
+  (hs : es Handler.List.t)
+  (f : ((e * es) Handler.List.t -> a) @ once)
   =
   let module H = (val Handler.create () : Handler.Create with type e = e and type es = es)
   in
@@ -549,26 +549,26 @@ let run_with
 module DRF : sig @@ portable
   val fiber
     : ('a : value mod portable) 'b 'e.
-    ('e Handler.t @ local portable -> 'a @ contended once unique -> 'b) @ once
+    ('e Handler.t portable -> 'a @ contended once unique -> 'b) @ once
     -> ('a, 'b, 'e, unit) continuation @ unique
 
   val fiber_with
     : ('a : value mod portable) 'b 'e 'es.
-    'es Handler.List.Length.t @ local
-    -> (('e * 'es) Handler.List.t @ local portable -> 'a @ contended once unique -> 'b)
+    'es Handler.List.Length.t
+    -> (('e * 'es) Handler.List.t portable -> 'a @ contended once unique -> 'b)
        @ once
     -> ('a, 'b, 'e, 'es) continuation @ unique
 
   val run
-    :  ('e Handler.t @ local portable -> 'a) @ once
+    :  ('e Handler.t portable -> 'a) @ once
     -> ('a, 'e, unit) res @ once unique
 
   (* Returns a [res] to be [Obj.magic]ed into the contended result type with
      [op @@ contended]. *)
 
   val run_with
-    :  'es Handler.List.t @ local portable
-    -> (('e * 'es) Handler.List.t @ local portable -> 'a) @ once
+    :  'es Handler.List.t portable
+    -> (('e * 'es) Handler.List.t portable -> 'a) @ once
     -> ('a, 'e, 'es) res @ once unique
 
   (* Returns a [res] to be [Obj.magic]ed into the contended result type with
@@ -612,7 +612,7 @@ module DRF_portable : sig @@ portable
 
   val fiber_with
     : ('a : value mod portable) 'b 'e 'es.
-    'es Handler.List.Length.t @ local
+    'es Handler.List.Length.t
     -> (('e * 'es) Handler.List.t @ contended local portable
         -> 'a @ contended once unique
         -> 'b)
@@ -723,7 +723,7 @@ module Make_generic (Types : sig
     ((Obj.magic [@mode unique once]) res : (a, p, q, es) result)
   ;;
 
-  let perform (type a p q) (h : _ Handler.t @ local) (op : (a, p, q, (p, q) t) ops) =
+  let perform (type a p q) (h : _ Handler.t) (op : (a, p, q, (p, q) t) ops) =
     let op : (a, (p, q) t) op = Obj.magic op in
     perform_ (h.h, op)
   ;;

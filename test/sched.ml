@@ -16,7 +16,7 @@ end
 
 type ('a, 'e) op =
   | Yield : (unit, 'e) op
-  | Fork : (local_ 'e Handled_effect.Handler.t -> string) -> (unit, 'e) op
+  | Fork : ('e Handled_effect.Handler.t -> string) -> (unit, 'e) op
   | Ping : (unit, 'e) op
 
 module Eff = Handled_effect.Make_rec (struct

@@ -24,7 +24,7 @@ module type Handler = sig
     end
 
     (** [length hs] is the length of [hs] *)
-    val length : 'es t @ local -> 'es Length.t
+    val length : 'es t -> 'es Length.t
   end
 end
 
@@ -78,7 +78,7 @@ module Definitions (Handler : Handler) (Continuation : Continuation) = struct
         ['es]. *)
     val fiber_with
       : ('a : value mod p_arg) 'b 'p 'q 'es.
-      'es Handler.List.Length.t @ local
+      'es Handler.List.Length.t
       -> ((('p, 'q) t * 'es) Handler.List.t @ c_res local p_arg
           -> 'a @ c_arg once unique
           -> 'b)
@@ -375,7 +375,7 @@ module type Handled_effect = sig @@ portable
   val continue
     :  ('a, 'b, 'es) Continuation.t @ unique
     -> 'a @ once unique
-    -> 'es Handler.List.t @ local
+    -> 'es Handler.List.t
     -> 'b @ once unique
 
   (** [discontinue k e hs] resumes the continuation [k] by raising the exception [e]. [hs]
@@ -383,7 +383,7 @@ module type Handled_effect = sig @@ portable
   val discontinue
     :  ('a, 'b, 'es) Continuation.t @ unique
     -> exn
-    -> 'es Handler.List.t @ local
+    -> 'es Handler.List.t
     -> 'b @ once unique
 
   (** [discontinue_with_backtrace k e bt hs] resumes the continuation [k] by raising the
@@ -393,7 +393,7 @@ module type Handled_effect = sig @@ portable
     :  ('a, 'b, 'es) Continuation.t @ unique
     -> exn
     -> Backtrace.t
-    -> 'es Handler.List.t @ local
+    -> 'es Handler.List.t
     -> 'b @ once unique
 
   include module type of struct
