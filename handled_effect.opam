@@ -12,10 +12,10 @@ build: [
 ]
 depends: [
   "ocaml" {>= "5.5.0"}
-  "base"
-  "basement"
-  "ppx_template"
-  "dune"         {>= "3.17.0"}
+  "base" {>= "v0.18~" & < "v0.19~"}
+  "basement" {>= "v0.18~" & < "v0.19~"}
+  "ppx_template" {>= "v0.18~" & < "v0.19~"}
+  "dune" {>= "3.17.0"}
 ]
 available: arch != "x86_32"
 synopsis: "Handled effects API for OxCaml"
